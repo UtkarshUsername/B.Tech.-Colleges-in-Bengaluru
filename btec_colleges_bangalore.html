@@ -1,0 +1,246 @@
+
+<h2 class="sr-only">Complete list of B.Tech colleges in Bangalore organized by category with search and filter</h2>
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); }
+.header { padding: 1.5rem 0 1rem; }
+.controls { display: flex; gap: 10px; margin-bottom: 1.25rem; flex-wrap: wrap; }
+input[type="text"] { flex: 1; min-width: 180px; }
+select { min-width: 140px; }
+.stats { display: flex; gap: 10px; margin-bottom: 1.25rem; flex-wrap: wrap; }
+.stat { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 0.6rem 1rem; font-size: 13px; color: var(--color-text-secondary); }
+.stat strong { color: var(--color-text-primary); font-weight: 500; }
+.section-title { font-size: 13px; font-weight: 500; color: var(--color-text-secondary); letter-spacing: 0.04em; text-transform: uppercase; margin: 1.25rem 0 0.5rem; padding-bottom: 4px; border-bottom: 0.5px solid var(--color-border-tertiary); }
+.college-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 8px; margin-bottom: 0.75rem; }
+.college-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 0.7rem 0.9rem; display: flex; flex-direction: column; gap: 4px; }
+.college-name { font-size: 14px; font-weight: 500; color: var(--color-text-primary); line-height: 1.35; }
+.college-meta { font-size: 12px; color: var(--color-text-secondary); }
+.badge { display: inline-block; font-size: 11px; padding: 2px 7px; border-radius: 4px; font-weight: 500; }
+.badge-govt { background: var(--color-background-success); color: var(--color-text-success); }
+.badge-private { background: var(--color-background-info); color: var(--color-text-info); }
+.badge-deemed { background: #EEEDFE; color: #3C3489; }
+.badge-central { background: #FAEEDA; color: #633806; }
+.no-results { padding: 2rem; text-align: center; color: var(--color-text-secondary); font-size: 14px; }
+.hidden { display: none; }
+</style>
+
+<div class="header">
+  <div class="controls">
+    <input type="text" id="search" placeholder="Search colleges..." oninput="filter()">
+    <select id="typeFilter" onchange="filter()">
+      <option value="">All types</option>
+      <option value="Government">Government</option>
+      <option value="Private">Private</option>
+      <option value="Deemed">Deemed University</option>
+      <option value="Central">Central / Autonomous</option>
+    </select>
+  </div>
+  <div class="stats">
+    <div class="stat"><strong id="totalCount">147</strong> total colleges</div>
+    <div class="stat"><strong>8</strong> government</div>
+    <div class="stat"><strong>127+</strong> private / AICTE approved</div>
+    <div class="stat"><strong id="showingCount">147</strong> showing</div>
+  </div>
+</div>
+
+<div id="collegeList"></div>
+
+<script>
+const colleges = [
+  { name: "Indian Institute of Science (IISc)", type: "Central", note: "NIRF rank 1 overall India" },
+  { name: "International Institute of Information Technology Bangalore (IIITB)", type: "Central", note: "NIRF rank 69 in engineering 2025" },
+  { name: "University Visvesvaraya College of Engineering (UVCE)", type: "Government", note: "Affiliated to Bangalore University" },
+  { name: "Dr. Ambedkar Institute of Technology (AIT)", type: "Government", note: "Govt aided, VTU affiliated" },
+  { name: "University of Agricultural Sciences (UAS) – Engineering", type: "Government", note: "" },
+  { name: "Government Toolroom & Training Centre (GTTC)", type: "Government", note: "" },
+  { name: "Rajiv Gandhi Institute of Technology (RGIT)", type: "Government", note: "Govt aided" },
+  { name: "Visvesvaraya Industrial and Technological Museum (VITM)", type: "Government", note: "" },
+  { name: "RV College of Engineering (RVCE)", type: "Private", note: "Top private; est. 1963" },
+  { name: "BMS College of Engineering (BMSCE)", type: "Private", note: "Est. 1946, oldest in Bangalore" },
+  { name: "MS Ramaiah Institute of Technology (MSRIT)", type: "Private", note: "Est. 1962" },
+  { name: "PES University (PESU)", type: "Deemed", note: "Formerly PES Institute of Technology" },
+  { name: "Dayananda Sagar College of Engineering (DSCE)", type: "Private", note: "" },
+  { name: "Bangalore Institute of Technology (BIT)", type: "Private", note: "Autonomous, est. 1979" },
+  { name: "BMS Institute of Technology & Management (BMSIT&M)", type: "Private", note: "" },
+  { name: "CMR Institute of Technology (CMRIT)", type: "Private", note: "" },
+  { name: "New Horizon College of Engineering (NHCE)", type: "Private", note: "" },
+  { name: "Nitte Meenakshi Institute of Technology (NMIT)", type: "Deemed", note: "Est. 2001" },
+  { name: "SJB Institute of Technology (SJBIT)", type: "Private", note: "" },
+  { name: "BNM Institute of Technology (BNMIT)", type: "Private", note: "" },
+  { name: "JSS Academy of Technical Education (JSSATE)", type: "Private", note: "" },
+  { name: "MVJ College of Engineering (MVJCE)", type: "Private", note: "" },
+  { name: "Manipal Institute of Technology – Bengaluru (MIT Bengaluru)", type: "Deemed", note: "" },
+  { name: "MS Ramaiah University of Applied Sciences (MSRUAS)", type: "Deemed", note: "" },
+  { name: "Jain University – Faculty of Engineering & Technology (FET JU)", type: "Deemed", note: "NIRF rank 2 in Bangalore 2025" },
+  { name: "CHRIST (Deemed to be University) – Engineering", type: "Deemed", note: "Est. 1969" },
+  { name: "RV University (RVU)", type: "Deemed", note: "Est. 2014" },
+  { name: "East West Institute of Technology (EWIT)", type: "Private", note: "" },
+  { name: "East Point College of Engineering & Technology", type: "Private", note: "" },
+  { name: "Global Academy of Technology (GAT)", type: "Private", note: "" },
+  { name: "Don Bosco Institute of Technology (DBIT)", type: "Private", note: "" },
+  { name: "Sambhram Institute of Technology", type: "Private", note: "" },
+  { name: "AMC Engineering College", type: "Private", note: "" },
+  { name: "Vivekananda Institute of Technology (VIT)", type: "Private", note: "" },
+  { name: "Oxford College of Engineering (TOCE)", type: "Private", note: "" },
+  { name: "K.N.S. Institute of Technology (KNSIT)", type: "Private", note: "" },
+  { name: "RR Institute of Technology (RRIT)", type: "Private", note: "" },
+  { name: "Sai Vidya Institute of Technology (SVIT)", type: "Private", note: "" },
+  { name: "Cambridge Institute of Technology (CIT)", type: "Private", note: "" },
+  { name: "APS College of Engineering", type: "Private", note: "" },
+  { name: "ACS College of Engineering", type: "Private", note: "" },
+  { name: "CMR College of Engineering & Technology (CMRCET)", type: "Private", note: "" },
+  { name: "Islamiah Institute of Technology (IIT Bangalore)", type: "Private", note: "" },
+  { name: "Alpha College of Engineering", type: "Private", note: "" },
+  { name: "Sapthagiri College of Engineering", type: "Private", note: "" },
+  { name: "Brindavan College of Engineering", type: "Private", note: "" },
+  { name: "Nagarjuna College of Engineering & Technology", type: "Private", note: "" },
+  { name: "T. John Institute of Technology (TJIT)", type: "Private", note: "" },
+  { name: "Sri Venkateshwara College of Engineering (SVCE)", type: "Private", note: "" },
+  { name: "Adarsha Institute of Technology", type: "Private", note: "" },
+  { name: "Impact College of Engineering & Applied Sciences", type: "Private", note: "" },
+  { name: "PNS Institute of Technology", type: "Private", note: "" },
+  { name: "SEA College of Engineering & Technology", type: "Private", note: "" },
+  { name: "Basava Academy of Engineering", type: "Private", note: "" },
+  { name: "Dayananda Sagar Academy of Technology & Management (DSATM)", type: "Private", note: "" },
+  { name: "Vemana Institute of Technology", type: "Private", note: "" },
+  { name: "Dr. Sri Sri Sri Shivakumara Mahaswamy College of Engineering", type: "Private", note: "" },
+  { name: "Sri Revana Siddeshwara Institute of Technology", type: "Private", note: "" },
+  { name: "Sri Vidya Vinayaka Institute of Technology", type: "Private", note: "" },
+  { name: "Jyothy Institute of Technology", type: "Private", note: "" },
+  { name: "Nandi Institute of Technology & Management Sciences (NITMS)", type: "Private", note: "" },
+  { name: "Shri Pillappa College of Engineering", type: "Private", note: "" },
+  { name: "Bangalore College of Engineering & Technology (BCET)", type: "Private", note: "Cheapest private option" },
+  { name: "Bangalore Technological Institute (BTI)", type: "Private", note: "" },
+  { name: "RajaRajeswari College of Engineering (RRCE)", type: "Private", note: "" },
+  { name: "Rajankunte Institute of Technology", type: "Private", note: "" },
+  { name: "Bangalore Institute of Technology – Rajankunte", type: "Private", note: "" },
+  { name: "Atria Institute of Technology (AIT)", type: "Private", note: "" },
+  { name: "Amruta Institute of Engineering & Management Sciences", type: "Private", note: "" },
+  { name: "Presidency University – Engineering", type: "Deemed", note: "" },
+  { name: "Reva University – Engineering", type: "Deemed", note: "" },
+  { name: "Alliance University – Engineering", type: "Deemed", note: "" },
+  { name: "Bangalore University – Engineering colleges (affiliated)", type: "Government", note: "" },
+  { name: "CMR University – Engineering", type: "Deemed", note: "" },
+  { name: "Dayananda Sagar University – Engineering", type: "Deemed", note: "" },
+  { name: "Garden City University – Engineering", type: "Deemed", note: "" },
+  { name: "Kristu Jayanti College – Engineering (KJC)", type: "Private", note: "" },
+  { name: "New Horizon College of Engineering – Kasturinagar", type: "Private", note: "" },
+  { name: "Sir M. Visvesvaraya Institute of Technology (Sir MVIT)", type: "Private", note: "" },
+  { name: "Siddaganga Institute of Technology (SIT) – Bangalore campus", type: "Private", note: "" },
+  { name: "Malla Reddy Institute of Technology & Science – Bangalore", type: "Private", note: "" },
+  { name: "Seshadripuram College of Engineering", type: "Private", note: "" },
+  { name: "Rao Bahadur Y. Mahabaleswarappa Engineering College (RYMEC)", type: "Private", note: "" },
+  { name: "HKBK College of Engineering", type: "Private", note: "" },
+  { name: "PESIT – PES Institute of Technology & Management (South Campus)", type: "Private", note: "" },
+  { name: "Shirdi Sai Engineering College (SSEC)", type: "Private", note: "" },
+  { name: "Akshaya Institute of Technology", type: "Private", note: "" },
+  { name: "GM Institute of Technology", type: "Private", note: "" },
+  { name: "Ghousia College of Engineering – Bengaluru campus", type: "Private", note: "" },
+  { name: "Channabasaveshwara Institute of Technology – Bangalore campus", type: "Private", note: "" },
+  { name: "KLS Gogte Institute of Technology – Bangalore campus", type: "Private", note: "" },
+  { name: "K.S. Institute of Technology (KSIT)", type: "Private", note: "" },
+  { name: "PESIT – North Campus", type: "Private", note: "" },
+  { name: "Vidyavardhaka College of Engineering – Bangalore campus", type: "Private", note: "" },
+  { name: "Vijaya Vittala Institute of Technology (VVIT)", type: "Private", note: "" },
+  { name: "Global Institute of Engineering & Technology (GIET)", type: "Private", note: "" },
+  { name: "Surana College – Engineering (SCE)", type: "Private", note: "" },
+  { name: "Star Institute of Information Technology", type: "Private", note: "" },
+  { name: "Bangalore Institute of Technology – Electronics City", type: "Private", note: "" },
+  { name: "Premier Institute of Engineering & Technology", type: "Private", note: "" },
+  { name: "Trinity College of Engineering & Technology", type: "Private", note: "" },
+  { name: "St. Joseph Engineering College (SJEC) – Bangalore", type: "Private", note: "" },
+  { name: "Rajiv Gandhi College of Engineering (RGCE)", type: "Private", note: "" },
+  { name: "B. Channakeshava Swamy Institute of Technology", type: "Private", note: "" },
+  { name: "REVA ITM (REVA Institute of Technology & Management)", type: "Private", note: "" },
+  { name: "Dayananda Sagar College of Engineering – North Bangalore", type: "Private", note: "" },
+  { name: "Acharya Institute of Technology (AIT)", type: "Private", note: "" },
+  { name: "Acharya & BM Reddy College of Engineering & Technology (ABMRCET)", type: "Private", note: "" },
+  { name: "Don Bosco Institute of Technology – BTech", type: "Private", note: "" },
+  { name: "National Institute of Engineering (NIE) – Bangalore campus", type: "Private", note: "" },
+  { name: "PES College of Engineering – Bangalore", type: "Private", note: "" },
+  { name: "K Ramaiah College of Arts, Science & Commerce – Engineering", type: "Private", note: "" },
+  { name: "Srinivas Institute of Technology – Bangalore", type: "Private", note: "" },
+  { name: "Soundarya Institute of Management & Science (SIMS)", type: "Private", note: "" },
+  { name: "SJCIT – SJC Institute of Technology", type: "Private", note: "" },
+  { name: "VIAT – Visvesvaraya Aerospace Institute of Technology", type: "Government", note: "Cheapest BTech: ₹12.9K fees" },
+  { name: "Bangalore Institute of Technology – Malleswaram (BIT)", type: "Private", note: "" },
+  { name: "R.V. Institute of Technology & Management (RVITM)", type: "Private", note: "" },
+  { name: "Sri Siddhartha Academy of Higher Education – Bangalore", type: "Deemed", note: "" },
+  { name: "Moodlakatte Institute of Technology – Bangalore campus", type: "Private", note: "" },
+  { name: "Marathalli Institute of Engineering & Technology", type: "Private", note: "" },
+  { name: "Oxford Polytechnic Institute", type: "Private", note: "" },
+  { name: "IES College of Technology", type: "Private", note: "" },
+  { name: "Deccan College of Engineering", type: "Private", note: "" },
+  { name: "BGS Institute of Technology – Bangalore", type: "Private", note: "" },
+  { name: "Canara Engineering College – Bangalore campus", type: "Private", note: "" },
+  { name: "Vijayanagara Sri Krishnadevaraya University Engineering College – Bangalore", type: "Government", note: "" },
+  { name: "GEC – Government Engineering College (Bangalore district)", type: "Government", note: "" },
+  { name: "MVJCE South Campus", type: "Private", note: "" },
+  { name: "J.N.N. College of Engineering – Bangalore campus", type: "Private", note: "" },
+  { name: "Sri Krishna Institute of Technology (SKIT)", type: "Private", note: "" },
+  { name: "East West College of Engineering & Technology", type: "Private", note: "" },
+  { name: "HKE Society's Engineering College – Bangalore campus", type: "Private", note: "" },
+  { name: "Ramaiah University of Applied Sciences – BTech", type: "Deemed", note: "" },
+  { name: "NITTE Meenakshi Institute of Technology (Deemed University)", type: "Deemed", note: "" },
+  { name: "ITM – Manipal BTech Bangalore", type: "Deemed", note: "" },
+  { name: "Gitam University – Engineering, Bangalore", type: "Deemed", note: "" },
+  { name: "Symbiosis Institute of Technology – Bangalore", type: "Deemed", note: "" },
+  { name: "Amity University – Engineering, Bangalore", type: "Deemed", note: "" },
+  { name: "Bharati Vidyapeeth (Deemed) University – Engineering, Bangalore", type: "Deemed", note: "" },
+  { name: "Jagran Lakecity University – Engineering (Bangalore)", type: "Deemed", note: "" },
+];
+
+const sections = [
+  { key: "Central", label: "Central / Autonomous institutions", badgeClass: "badge-central" },
+  { key: "Government", label: "Government colleges", badgeClass: "badge-govt" },
+  { key: "Deemed", label: "Deemed universities", badgeClass: "badge-deemed" },
+  { key: "Private", label: "Private & aided colleges", badgeClass: "badge-private" },
+];
+
+function filter() {
+  const q = document.getElementById("search").value.toLowerCase();
+  const t = document.getElementById("typeFilter").value;
+  let count = 0;
+  sections.forEach(sec => {
+    const matching = colleges.filter(c =>
+      (t === "" || c.type === t) &&
+      (q === "" || c.name.toLowerCase().includes(q) || (c.note && c.note.toLowerCase().includes(q))) &&
+      c.type === sec.key
+    );
+    const secEl = document.getElementById("sec_" + sec.key);
+    const gridEl = document.getElementById("grid_" + sec.key);
+    if (matching.length === 0) { secEl.classList.add("hidden"); return; }
+    secEl.classList.remove("hidden");
+    count += matching.length;
+    gridEl.innerHTML = matching.map((c, i) => `
+      <div class="college-card">
+        <div class="college-name">${i+1 < 10 ? '0' : ''}${i+1}. ${c.name}</div>
+        ${c.note ? `<div class="college-meta">${c.note}</div>` : ""}
+      </div>
+    `).join("");
+  });
+  document.getElementById("showingCount").textContent = count;
+  const noRes = document.getElementById("noResults");
+  if (count === 0) noRes.style.display = "block"; else noRes.style.display = "none";
+}
+
+const container = document.getElementById("collegeList");
+sections.forEach(sec => {
+  const div = document.createElement("div");
+  div.id = "sec_" + sec.key;
+  div.innerHTML = `
+    <div class="section-title">${sec.label} <span class="badge ${sec.badgeClass}">${sec.key}</span></div>
+    <div class="college-grid" id="grid_${sec.key}"></div>
+  `;
+  container.appendChild(div);
+});
+const noRes = document.createElement("div");
+noRes.id = "noResults";
+noRes.className = "no-results";
+noRes.style.display = "none";
+noRes.textContent = "No colleges match your search.";
+container.appendChild(noRes);
+
+filter();
+</script>
